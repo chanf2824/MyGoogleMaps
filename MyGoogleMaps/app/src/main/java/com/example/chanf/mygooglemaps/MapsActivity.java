@@ -21,6 +21,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private LocationManager manager;
     private GoogleMap mMap;
+    public static final int REQUEST_LOCATION = 0;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,9 +62,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     REQUEST_LOCATION);
         } else {
             // permission has been granted, continue as usual
-            Location myLocation =
-                    LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+            mMap.setMyLocationEnabled(true);
         }
+
 
     }
 
