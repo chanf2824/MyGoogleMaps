@@ -9,10 +9,11 @@
         android:layout_height="wrap_content">
 
         <Button
+            android:id="@+id/buttonView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="New Button"
-            android:id="@+id/button"/>
+            android:onClick="toggleView"
+            android:text="VIEW" />
 
     </LinearLayout>
 

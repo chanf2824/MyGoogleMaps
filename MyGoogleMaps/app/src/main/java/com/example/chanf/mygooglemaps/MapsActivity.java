@@ -8,6 +8,8 @@ import android.location.LocationManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -57,14 +59,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             // Check Permissions Now
+            Log.d("MyGoogleMaps", "Failed Permission check 1");
+            Log.d("MyGoogleMaps", Integer.toString(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)));
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     REQUEST_LOCATION);
-        } else {
-            // permission has been granted, continue as usual
-            mMap.setMyLocationEnabled(true);
         }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            Log.d("MyGoogleMaps", "Failed Permission check 2");
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                    REQUEST_LOCATION);
+        }
+        mMap.setMyLocationEnabled(true);
 
+
+    }
+
+    public void toggleView(View v){
+        if (mMap.getMapType() == GoogleMap.MAP_TYPE_NORMAL)
+            mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+        else
+            mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 
     }
 
