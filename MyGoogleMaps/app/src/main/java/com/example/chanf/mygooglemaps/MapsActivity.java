@@ -10,8 +10,10 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -21,9 +23,15 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback{
 
-    private LocationManager manager;
     private GoogleMap mMap;
     public static final int REQUEST_LOCATION = 0;
+
+    private LocationManager locationManager;
+    private boolean isGPSenabled = false;
+    private boolean isNetworkEnabled = false;
+    private boolean canGetLocation = false;
+    private static final long MIN_TIME_BW_UPDATES = 1000*15;
+    private static final float MIN_DISTANCE_CHANGE_FOR_UPDATES = 5.0f;
 
 
     @Override
@@ -83,6 +91,109 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         else
             mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 
+    }
+
+    public void getLocation(View v){
+        try{
+            locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+            //get GPS status
+            isGPSenabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+            if (isGPSenabled) Log.d("MyMaps", "getLocation: GPS is enabled");
+
+            //get network status
+            isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+            if (isNetworkEnabled) Log.d("MyMaps", "getLocation: Network is enabled");
+
+            if(!isNetworkEnabled && !isGPSenabled) {
+                Log.d("MyMaps", "getLocation: No provider is enabled");
+            } else {
+                canGetLocation = true;
+                if(isGPSenabled){
+                    Log.d("MyMaps", "getLocation: GPS enabled - requesting location updates");
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                            MIN_TIME_BW_UPDATES,
+                            MIN_DISTANCE_CHANGE_FOR_UPDATES,
+                            locationListenerGps);
+                    Log.d("MyMaps", "getLocation: Network GPS update request successful");
+                    Toast.makeText(this, "Using GPS", Toast.LENGTH_SHORT);
+                }
+                if(isNetworkEnabled){
+                    Log.d("MyMaps", "getLocation: Network enabled - requesting location updates");
+                    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                            MIN_TIME_BW_UPDATES,
+                            MIN_DISTANCE_CHANGE_FOR_UPDATES,
+                            locationListenerNetwork);
+                    Log.d("MyMaps", "getLocation: Network GPS update request successful");
+                    Toast.makeText(this, "Using Network", Toast.LENGTH_SHORT);
+                }
+
+            }
+
+        } catch (Exception e) {
+            Log.d("MyMaps", "Caught an exception in getLocation");
+            e.printStackTrace();;
+        }
+    }
+
+    LocationListener locationListenerGps = new LocationListener() {
+
+        @Override
+        public void onLocationChanged(Location location) {
+            Log.d("Location", "Location changed");
+            //when the location changes, update the map by zooming to the location
+            CameraUpdate center = CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(),location.getLongitude()));
+            mMap.moveCamera(center);
+
+            CameraUpdate zoom=CameraUpdateFactory.zoomTo(15);
+            mMap.animateCamera(zoom);
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+            Log.d("Location", "onStatusChanged");
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+            Log.d("Location", "onProviderEnabled");
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+            Log.d("Location", "onProviderDisabled");
+
+        }
+    }
+
+    LocationListener locationListenerNetwork = new LocationListener() {
+
+        @Override
+        public void onLocationChanged(Location location) {
+            Log.d("Location", "Location changed");
+            //when the location changes, update the map by zooming to the location
+            CameraUpdate center = CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(),location.getLongitude()));
+            mMap.moveCamera(center);
+
+            CameraUpdate zoom=CameraUpdateFactory.zoomTo(15);
+            mMap.animateCamera(zoom);
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+            Log.d("Location", "onStatusChanged");
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+            Log.d("Location", "onProviderEnabled");
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+            Log.d("Location", "onProviderDisabled");
+
+        }
     }
 
 

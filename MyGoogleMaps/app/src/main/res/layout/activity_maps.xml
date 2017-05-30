@@ -10,14 +10,22 @@
 
         <Button
             android:id="@+id/buttonView"
-            android:layout_width="match_parent"
+            android:layout_width="173dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:onClick="toggleView"
             android:text="VIEW" />
 
+        <Button
+            android:id="@+id/buttonTrack"
+            android:layout_width="170dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="getLocation"
+            android:text="Track" />
     </LinearLayout>
 
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:map="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/map"
