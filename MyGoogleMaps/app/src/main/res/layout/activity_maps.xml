@@ -21,8 +21,8 @@
             android:layout_width="170dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:onClick="getLocation"
-            android:text="Track" />
+            android:onClick="trackMe"
+            android:text="TRACK" />
     </LinearLayout>
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
