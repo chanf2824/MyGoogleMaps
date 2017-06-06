@@ -3,6 +3,7 @@ package com.example.chanf.mygooglemaps;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -12,6 +13,7 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -23,6 +25,8 @@ import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -33,6 +37,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private boolean isNetworkEnabled = false;
     private boolean canGetLocation = false;
     private Location myLocation;
+    private Geocoder geocoder;
+    private EditText editSearch;
+    private LatLng[] locs;
 
     public static final int REQUEST_LOCATION = 2;
     private static final long MIN_TIME_BW_UPDATES = 1000 * 15;
@@ -64,6 +71,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        geocoder = new Geocoder(this);
+        editSearch = (EditText)findViewById(R.id.editTextSearch);
+
 
         // Add a marker in Sydney and move the camera
         LatLng temecula = new LatLng(33.4936, -117.1484);
@@ -188,6 +198,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    //method used when location changes
     private void dropAMarker(String provider) {
 
         LatLng userLocation;
@@ -224,6 +235,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         .radius(2)
                         .strokeColor(Color.RED)
                         .strokeWidth(2).fillColor(Color.RED));
+                //markers.add(circle);
                 Log.d("MyMaps", "dropAMarker:  NETWORK");
             }
 
@@ -234,13 +246,46 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
+    //method for button to remove markers
+    public void removeAllMarkers(View v)
+    {
+        mMap.clear();
+        Log.d("MyMaps", "Markers removed");
+        Toast.makeText(this, "Markers cleared", Toast.LENGTH_SHORT).show();
+    }
+
+    //method for button to initiate search
+    public void search(View v){
+        String search = editSearch.getText().toString();
+        Log.d("MyMaps", "Search text = " + search);
+
+        try {
+            //getLocations
+            geocoder.getFromLocationName(search, 5);
+
+        } catch(Exception e) {
+            e.printStackTrace();
+           Log.d("MyMap", "Exception in search method");
+
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            Log.d("MyMaps", "dropAMarker: Failed Permission check 1");
+            return;
+        }
+        Location loc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        geocoder.isPresent();
+
+
+    }
+
     LocationListener locationListenerGps = new LocationListener() {
 
         @Override
         public void onLocationChanged(Location location) {
             //output message in Log.d and Toast
             Log.d("MyMaps", "onLocationChanged (GPS): Location changed");
-            Toast.makeText(getApplicationContext(), "GPS: Location changed", Toast.LENGTH_SHORT).show();
+           // Toast.makeText(getApplicationContext(), "GPS: Location changed", Toast.LENGTH_SHORT).show();
             //drop a marker on the map (create a method called dropAmarker()
             dropAMarker("GPS");
 
@@ -338,7 +383,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             //output message in Log.d and Toast
             Log.d("MyMaps", "onLocationChanged (Network): Location changed");
-            Toast.makeText(getApplicationContext(), "Network: Location changed", Toast.LENGTH_SHORT).show();
+           // Toast.makeText(getApplicationContext(), "Network: Location changed", Toast.LENGTH_SHORT).show();
 
             //drop a marker on the map (create a method called dropAMarker)
             dropAMarker("NETWORK");
