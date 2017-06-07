@@ -3,6 +3,7 @@ package com.example.chanf.mygooglemaps;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
@@ -25,7 +26,6 @@ import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import java.util.ArrayList;
 import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
@@ -37,14 +37,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private boolean isNetworkEnabled = false;
     private boolean canGetLocation = false;
     private Location myLocation;
-    private Geocoder geocoder;
     private EditText editSearch;
-    private LatLng[] locs;
+    private List<Address> locs;
 
-    public static final int REQUEST_LOCATION = 2;
+    private static final int REQUEST_LOCATION = 2;
     private static final long MIN_TIME_BW_UPDATES = 1000 * 15;
     private static final float MIN_DISTANCE_CHANGE_FOR_UPDATES = 5.0f;
     private static final float MY_LOC_ZOOM_FACTOR = 17f;
+    private static final double FIVE_MILE_RADIUS = 5/69;
 
 
     @Override
@@ -71,7 +71,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        geocoder = new Geocoder(this);
         editSearch = (EditText)findViewById(R.id.editTextSearch);
 
 
@@ -258,23 +257,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void search(View v){
         String search = editSearch.getText().toString();
         Log.d("MyMaps", "Search text = " + search);
-
-        try {
+        if (search.trim().isEmpty()) {
+            Toast.makeText(this, "Please input a search", Toast.LENGTH_SHORT).show();
+        } else {
+            Geocoder geocoder = new Geocoder(this);
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+                Log.d("MyMaps", "search: Failed Permission check 1");
+                return;
+            }
+            Location loc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            try {
             //getLocations
-            geocoder.getFromLocationName(search, 5);
-
+            locs = geocoder.getFromLocationName(search, 5, loc.getLatitude() - FIVE_MILE_RADIUS, loc.getLongitude() - FIVE_MILE_RADIUS,
+                    loc.getLatitude() + FIVE_MILE_RADIUS, loc.getLongitude() + FIVE_MILE_RADIUS);
+            Log.d("MyMaps", "search: locs list is filled; size = " + locs.size());
         } catch(Exception e) {
             e.printStackTrace();
            Log.d("MyMap", "Exception in search method");
 
         }
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            Log.d("MyMaps", "dropAMarker: Failed Permission check 1");
-            return;
-        }
-        Location loc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         geocoder.isPresent();
+        }
 
 
     }
