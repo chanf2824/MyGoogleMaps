@@ -26,6 +26,8 @@ import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
@@ -71,7 +73,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        editSearch = (EditText)findViewById(R.id.editTextSearch);
 
 
         // Add a marker in Sydney and move the camera
@@ -95,9 +96,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
                     REQUEST_LOCATION);
         }
-        mMap.setMyLocationEnabled(true);
-        Log.d("MyMaps", "setMyLocationEnabled: TRUE");
-        Toast.makeText(this, "Location enabled", Toast.LENGTH_SHORT).show();
+       // mMap.setMyLocationEnabled(true);
+        //Log.d("MyMaps", "setMyLocationEnabled: TRUE");
+       // Toast.makeText(this, "Location enabled", Toast.LENGTH_SHORT).show();
 
 
     }
@@ -255,32 +256,70 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     //method for button to initiate search
     public void search(View v){
+        trackMe(v);
+        editSearch = (EditText)findViewById(R.id.editTextSearch);
         String search = editSearch.getText().toString();
         Log.d("MyMaps", "Search text = " + search);
+        List<Address> locs = new ArrayList<>();
+
         if (search.trim().isEmpty()) {
-            Toast.makeText(this, "Please input a search", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Please input a search", Toast.LENGTH_SHORT).show();
         } else {
-            Geocoder geocoder = new Geocoder(this);
+            Geocoder geocoder = new Geocoder(getApplicationContext());
+
+            //permissions and last known location
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                     != PackageManager.PERMISSION_GRANTED) {
                 Log.d("MyMaps", "search: Failed Permission check 1");
                 return;
             }
-            Location loc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+            Location myLoc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if (myLoc == null) {
+                myLoc = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                Log.d("MyMaps", "Loc was null; now tied to network provider");
+            }
+            Log.d("MyMaps", "myLoc is not null");
+
             try {
-            //getLocations
-            locs = geocoder.getFromLocationName(search, 5, loc.getLatitude() - FIVE_MILE_RADIUS, loc.getLongitude() - FIVE_MILE_RADIUS,
-                    loc.getLatitude() + FIVE_MILE_RADIUS, loc.getLongitude() + FIVE_MILE_RADIUS);
-            Log.d("MyMaps", "search: locs list is filled; size = " + locs.size());
-        } catch(Exception e) {
-            e.printStackTrace();
-           Log.d("MyMap", "Exception in search method");
+                //get locations
+                locs = geocoder.getFromLocationName(search, 200, myLoc.getLatitude() - 0.0324637681, myLoc.getLongitude() - 0.03332387845,
+                        myLoc.getLatitude() + 0.0324637681, myLoc.getLongitude() + 0.03332387845);
+                //locs = geocoder.getFromLocationName(search, 5);
+                Log.d("MyMaps", "search: locs list size = " + locs.size());
+            } catch(Exception e) {
+                e.printStackTrace();
+                Log.d("MyMap", "Exception in search method");
+            }
+            //geocoder.isPresent();
+            if (locs.size() > 0) {
+                for (int i = 0; i < locs.size(); i++) {
+                    Address add = locs.get(i);
+                    LatLng pos = new LatLng(add.getLatitude(), add.getLongitude());
+
+                    Circle circle = mMap.addCircle(new CircleOptions()
+                            .center(pos)
+                            .radius(100)
+                            .strokeColor(Color.MAGENTA)
+                            .strokeWidth(2).fillColor(Color.MAGENTA));
+                    Log.d("MyMaps", "added circle");
+                }
+               /* CameraUpdate update = CameraUpdateFactory.newLatLngZoom(new LatLng(myLoc.getLatitude(), myLoc.getLongitude()),
+                        MY_LOC_ZOOM_FACTOR);
+                mMap.animateCamera(update);
+                Log.d("MyMaps", "camera zoomed"); */
+            }
 
         }
-        geocoder.isPresent();
-        }
 
+    }
 
+    private double getChangeLongitude(double latitude, int miles) {
+        double degreesRadians = (Math.PI/180);
+        double radiansDegrees = (180/Math.PI);
+        double r = 3690*(Math.cos(latitude * (degreesRadians)));
+        return ((miles/r)*radiansDegrees);
     }
 
     LocationListener locationListenerGps = new LocationListener() {
