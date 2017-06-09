@@ -12,6 +12,7 @@ import android.location.LocationProvider;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -22,6 +23,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
@@ -256,16 +258,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     //method for button to initiate search
     public void search(View v){
-        trackMe(v);
+        //has location manager instantiation
+        locationManager = (LocationManager)getSystemService(LOCATION_SERVICE);
+
         editSearch = (EditText)findViewById(R.id.editTextSearch);
         String search = editSearch.getText().toString();
         Log.d("MyMaps", "Search text = " + search);
-        List<Address> locs = new ArrayList<>();
+        List<Address> locs = new ArrayList<Address>();
+
+        //part of debug
+        //StringBuffer buffer = new StringBuffer();
 
         if (search.trim().isEmpty()) {
             Toast.makeText(getApplicationContext(), "Please input a search", Toast.LENGTH_SHORT).show();
         } else {
-            Geocoder geocoder = new Geocoder(getApplicationContext());
+            Geocoder geocoder = new Geocoder(this);
 
             //permissions and last known location
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -284,7 +291,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             try {
                 //get locations
-                locs = geocoder.getFromLocationName(search, 200, myLoc.getLatitude() - 0.0324637681, myLoc.getLongitude() - 0.03332387845,
+                locs = geocoder.getFromLocationName(search, 50, myLoc.getLatitude() - 0.0324637681, myLoc.getLongitude() - 0.03332387845,
                         myLoc.getLatitude() + 0.0324637681, myLoc.getLongitude() + 0.03332387845);
                 //locs = geocoder.getFromLocationName(search, 5);
                 Log.d("MyMaps", "search: locs list size = " + locs.size());
@@ -296,7 +303,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if (locs.size() > 0) {
                 for (int i = 0; i < locs.size(); i++) {
                     Address add = locs.get(i);
+                    //buffer.append(add.toString() + "\n");
                     LatLng pos = new LatLng(add.getLatitude(), add.getLongitude());
+
+                    Log.d("MyMaps", pos.toString());
+
+                    //put marker and circle (circle not apparent enough)
+                    mMap.addMarker(new MarkerOptions().position(pos).title(add.getFeatureName())
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
 
                     Circle circle = mMap.addCircle(new CircleOptions()
                             .center(pos)
@@ -305,21 +319,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             .strokeWidth(2).fillColor(Color.MAGENTA));
                     Log.d("MyMaps", "added circle");
                 }
-               /* CameraUpdate update = CameraUpdateFactory.newLatLngZoom(new LatLng(myLoc.getLatitude(), myLoc.getLongitude()),
-                        MY_LOC_ZOOM_FACTOR);
+                //showMessage("Search", buffer.toString());
+                Toast.makeText(this, "Markers placed", Toast.LENGTH_SHORT).show();
+                CameraUpdate update = CameraUpdateFactory.newLatLngZoom(new LatLng(myLoc.getLatitude(), myLoc.getLongitude()), 10);
                 mMap.animateCamera(update);
-                Log.d("MyMaps", "camera zoomed"); */
+                Log.d("MyMaps", "camera zoomed");
             }
+            else
+                Toast.makeText(this, "No results found", Toast.LENGTH_SHORT).show();
 
         }
 
     }
 
-    private double getChangeLongitude(double latitude, int miles) {
+  /*  private double getChangeLongitude(double latitude, int miles) {
         double degreesRadians = (Math.PI/180);
         double radiansDegrees = (180/Math.PI);
         double r = 3690*(Math.cos(latitude * (degreesRadians)));
         return ((miles/r)*radiansDegrees);
+    } */
+
+    private void showMessage(String title, String message) {
+        //alert dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(true); //cancel using back button
+        builder.setTitle(title);
+        builder.setMessage(message);
+        builder.show();
     }
 
     LocationListener locationListenerGps = new LocationListener() {
