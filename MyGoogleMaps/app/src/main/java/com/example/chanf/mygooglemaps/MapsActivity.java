@@ -114,6 +114,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public void trackMe(View v) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.d("MyMaps", "TrackMe: Permissions failed");
+            return;
+        }
+        mMap.setMyLocationEnabled(false);
         if (!(isGPSenabled && isNetworkEnabled)) {
             Log.d("MyMaps", "trackMe: called getLocation");
             getLocation();
@@ -124,14 +130,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.d("MyMaps", "trackMe: removed GPS updates");
             locationManager.removeUpdates(locationListenerNetwork);
             Log.d("MyMaps", "trackMe: removed Network");
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                    ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                Log.d("MyMaps", "Permissions failed");
-                return;
-            }
-            mMap.setMyLocationEnabled(true);
-            Log.d("MyMaps", "trackMe: Location enabled = true");
-            Toast.makeText(getApplicationContext(), "setMyLocation = true", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -223,7 +221,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 userLocation = new LatLng(myLocation.getLatitude(), myLocation.getLongitude());
                 Circle circle = mMap.addCircle(new CircleOptions()
                         .center(userLocation)
-                        .radius(2)
+                        .radius(5)
                         .strokeColor(Color.GREEN)
                         .strokeWidth(2).fillColor(Color.GREEN));
                 Log.d("MyMaps", "dropAMarker: GPS");
@@ -234,7 +232,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 Circle circle = mMap.addCircle(new CircleOptions()
                         .center(userLocation)
-                        .radius(2)
+                        .radius(5)
                         .strokeColor(Color.RED)
                         .strokeWidth(2).fillColor(Color.RED));
                 //markers.add(circle);
